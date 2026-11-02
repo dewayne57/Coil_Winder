@@ -1,44 +1,30 @@
 # Coil_Winder
 
-Arduino Mega 2560 coil-winder sketch with a 4x20 LCD and 4x4 keypad driven menu system.
+This project builds upon the project by JGJMatt at https://www.instructables.com/Make-an-Automatic-Coil-Winder/. 
+It uses the same general approach but makes several additions/changes.  The summary of these alterations are:
 
-## Included sketch
+- Use an 8mm axle and LM8UU linear bearing.  Alternate end pieces and wire guide are provided, while the 
+  original 6mm versions are retained.
+- Replace the wire spindle motor with an NEMA 23 series motor because the NEMA 17 was torque limited.
+- Add a wire anchor plate to help keep the wires and any taps organized
+- Add both a conic and trapezoidal coil form adapter
+- Add limit switches for the X-axis (wire guide)
+- Add software for the arduino to support many different winding patterns and options.
 
-- `/home/runner/work/Coil_Winder/Coil_Winder/Coil_Winder.ino`
+## Winding Patterns Supported
 
-The sketch provides menu-based entry and review screens for:
+This project supports winding coils using one of 4 standard patterns.  These are: 
 
-- wire size
-- form shape (`Round`, `Rectangular`, `Oval`)
-- form diameter or width/height depending on shape
-- target mode (`Turns` or `Inductance`)
-- target turns or target inductance
-- number of layers
-- winding mode (`Single`, `Bifilar`, `Multi-filar`)
-- filar count for multi-filar windings
+- Solenoid: The solenoid pattern places turns adjacent to each other on the form.  Spacing can be 
+  specified in software, with the default being 0mm (turns are adjacent)
+- Scramble: The turns are laid down in a random pattern and overlap each other.  This form provides
+  lower coil capacitance and is ideal for RF and audio pickup coils. 
+- Orthocyclic: Similar to solenoid, excpet the subsequent layers are offset by 1/2 the diameter
+   of the wire to ensure the most compact coil can be wound. 
+- Universal: This is a format developed primarily for RF and high frequency coils that lays each 
+   turn down at an angle to the previous turn to reduce capacitance.
 
-## Controls
+## Features
 
-The sketch expects a 4x4 keypad with this layout:
-
-| 1 | 2 | 3 | Up |
-|---|---|---|----|
-| 4 | 5 | 6 | Down |
-| 7 | 8 | 9 | Yes |
-| . | 0 | No | Enter |
-
-- `Up` / `Down`: move through the menu
-- `Enter`: edit or confirm a numeric field
-- `Yes`: advance choice fields or save numeric edits
-- `No`: reverse choice fields, erase a digit while editing, or reset on the review screen
-- `0-9` / `.`: direct numeric entry for editable fields
-
-## Hardware defaults
-
-The sketch is configured for:
-
-- LCD pins: `RS=22`, `EN=23`, `D4=24`, `D5=25`, `D6=26`, `D7=27`
-- keypad row pins: `30, 31, 32, 33`
-- keypad column pins: `34, 35, 36, 37`
-
-Adjust those constants in `Coil_Winder.ino` to match the actual wiring.
+The software allows the user to enter the wire size using a standard AWG wire gauge, or the diameter 
+of the wire if non-standard or metric size.
