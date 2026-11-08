@@ -19,6 +19,10 @@ typedef struct {
   uint8_t  edges_set;
   int32_t  left_pos;    /* X microsteps from the home position */
   int32_t  right_pos;
+<<<<<<< HEAD
+=======
+  uint8_t  start_right; /* 1 = start winding at the right edge */
+>>>>>>> ecaf5c5b57e6cfd2ef8d7d9244e5381016d40631
 } settings_t;
 
 /* Returns false if nothing valid is stored (the struct is left untouched). */

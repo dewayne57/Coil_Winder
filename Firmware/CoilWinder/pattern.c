@@ -9,6 +9,12 @@ static long turns_per_layer;   /* N: wire turns across one full layer */
 static long univ_q;
 static uint32_t rng;
 static float scr_x;
+<<<<<<< HEAD
+=======
+static bool mirrored;
+
+void pattern_set_mirror(bool m) { mirrored = m; }
+>>>>>>> ecaf5c5b57e6cfd2ef8d7d9244e5381016d40631
 
 static const char *names[PAT_COUNT] = { "Solenoid", "Orthocyclic", "Scramble", "Universal" };
 
@@ -97,6 +103,10 @@ long pattern_pos(unsigned long seg) {
       break;
   }
 
+<<<<<<< HEAD
+=======
+  if (mirrored) x = left + right - x;
+>>>>>>> ecaf5c5b57e6cfd2ef8d7d9244e5381016d40631
   long xi = lroundf(x);
   if (xi < (long)left)  xi = (long)left;
   if (xi > (long)right) xi = (long)right;

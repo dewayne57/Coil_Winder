@@ -2,7 +2,11 @@
 #include "settings.h"
 
 #define SETTINGS_MAGIC   0xC017
+<<<<<<< HEAD
 #define SETTINGS_VERSION 1
+=======
+#define SETTINGS_VERSION 2
+>>>>>>> ecaf5c5b57e6cfd2ef8d7d9244e5381016d40631
 #define SETTINGS_ADDR    0
 
 typedef struct {

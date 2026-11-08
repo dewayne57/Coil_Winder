@@ -13,8 +13,19 @@ typedef enum {
   PAT_COUNT
 } pattern_t;
 
+<<<<<<< HEAD
 const char *pattern_name(pattern_t t);
 
+=======
+#include <stdbool.h>
+
+const char *pattern_name(pattern_t t);
+
+/* When set, the pattern is mirrored so winding starts at the right edge and proceeds leftward.
+   Call before pattern_begin. */
+void pattern_set_mirror(bool mirror);
+
+>>>>>>> ecaf5c5b57e6cfd2ef8d7d9244e5381016d40631
 /* left/right are the guide positions (X microsteps) of the first and last wire centres.
    wire_steps is the wire pitch in X microsteps. univ_quarters is used by PAT_UNIVERSAL only. */
 void pattern_begin(pattern_t t, long left, long right, float wire_steps, int univ_quarters);

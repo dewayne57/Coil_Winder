@@ -64,6 +64,11 @@
 /* Jogging the wire guide to set the coil edges (positions are in microsteps from home) */
 #define JOG_STEPS_PER_DETENT        (X_MICROSTEPS * 2UL)   /* 2 full steps per click */
 #define JOG_FULLSTEPS_PER_SEC       200UL
+<<<<<<< HEAD
+=======
+#define JOG_Y_STEPS_PER_DETENT      (Y_MICROSTEPS * 4UL)   /* 4 full steps (7.2 deg) per click */
+#define JOG_Y_RATE_SPS              (100UL * Y_MICROSTEPS)
+>>>>>>> ecaf5c5b57e6cfd2ef8d7d9244e5381016d40631
 #define JOG_RATE_SPS                (JOG_FULLSTEPS_PER_SEC * X_MICROSTEPS)
 #define MIN_COIL_WIDTH_STEPS        (X_MICROSTEPS * 4UL)
 

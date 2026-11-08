@@ -13,8 +13,13 @@
 #include "pattern.h"
 #include "settings.h"
 
+<<<<<<< HEAD
 typedef enum { ST_MENU, ST_SET_LEFT, ST_SET_RIGHT, ST_TO_START, ST_RUN, ST_PAUSED, ST_DONE, ST_ERROR } state_t;
 enum { IT_UNITS, IT_WIRE, IT_TURNS, IT_TYPE, IT_UNIV, IT_SPEED, IT_EDGES, IT_START, IT_REHOME, IT_NEWCOIL, IT_SAVE, IT_COUNT };
+=======
+typedef enum { ST_MENU, ST_SET_LEFT, ST_SET_RIGHT, ST_TO_START, ST_RUN, ST_PAUSED, ST_DONE, ST_ERROR, ST_JOG_Y } state_t;
+enum { IT_UNITS, IT_WIRE, IT_TURNS, IT_TYPE, IT_UNIV, IT_SPEED, IT_EDGES, IT_SIDE, IT_JOGY, IT_START, IT_REHOME, IT_NEWCOIL, IT_SAVE, IT_COUNT };
+>>>>>>> ecaf5c5b57e6cfd2ef8d7d9244e5381016d40631
 
 static state_t state = ST_MENU;
 static const char *msg = "";
@@ -32,7 +37,13 @@ static int y_speed_tenths = Y_SPEED_DEFAULT_TENTHS_RPS;
 static bool edges_set = false;
 static long left_pos = 0;
 static long right_pos = 0;
+<<<<<<< HEAD
 static long jog_target = 0;
+=======
+static bool start_right = false;  // wind from the right edge toward the left
+static long jog_target = 0;
+static long jog_y_target = 0;
+>>>>>>> ecaf5c5b57e6cfd2ef8d7d9244e5381016d40631
 static long x_max_limit = 0;
 static bool x_max_known = false;
 
@@ -103,7 +114,11 @@ static void build_visible(void) {
   visible_count = 0;
   for (int i = 0; i < IT_COUNT; i++) {
     if (tap_mode) {
+<<<<<<< HEAD
       if (i != IT_TURNS && i != IT_SPEED && i != IT_START && i != IT_REHOME && i != IT_NEWCOIL) continue;
+=======
+      if (i != IT_TURNS && i != IT_SPEED && i != IT_JOGY && i != IT_START && i != IT_REHOME && i != IT_NEWCOIL) continue;
+>>>>>>> ecaf5c5b57e6cfd2ef8d7d9244e5381016d40631
     } else {
       if (i == IT_REHOME || i == IT_NEWCOIL) continue;
       if (i == IT_UNIV && pat != PAT_UNIVERSAL) continue;
@@ -144,6 +159,15 @@ static void item_text(int it, char *buf, size_t n) {
         snprintf(buf, n, "Edges: not set");
       }
       break;
+<<<<<<< HEAD
+=======
+    case IT_SIDE:
+      snprintf(buf, n, "Start side: %s", start_right ? "Right" : "Left");
+      break;
+    case IT_JOGY:
+      snprintf(buf, n, "Jog form motor");
+      break;
+>>>>>>> ecaf5c5b57e6cfd2ef8d7d9244e5381016d40631
     case IT_START:
       snprintf(buf, n, (tap_mode && resume_ok) ? "** CONTINUE **" : "** START **");
       break;
@@ -192,6 +216,12 @@ static void edit_item(int it, int delta) {
     case IT_SPEED:
       y_speed_tenths = clamp_int((long)y_speed_tenths + delta, Y_SPEED_MIN_TENTHS_RPS, Y_SPEED_MAX_TENTHS_RPS);
       break;
+<<<<<<< HEAD
+=======
+    case IT_SIDE:
+      start_right = !start_right;
+      break;
+>>>>>>> ecaf5c5b57e6cfd2ef8d7d9244e5381016d40631
   }
 }
 
@@ -207,6 +237,10 @@ static void save_settings(void) {
   s.edges_set = edges_set;
   s.left_pos = left_pos;
   s.right_pos = right_pos;
+<<<<<<< HEAD
+=======
+  s.start_right = start_right;
+>>>>>>> ecaf5c5b57e6cfd2ef8d7d9244e5381016d40631
   settings_save(&s);
   Serial.println(F("Settings saved"));
 }
@@ -221,6 +255,10 @@ static bool load_settings(void) {
   pat = (s.pattern < PAT_COUNT) ? s.pattern : PAT_SOLENOID;
   univ_quarters = clamp_int(s.univ_quarters, UNIV_QUARTERS_MIN, UNIV_QUARTERS_MAX);
   y_speed_tenths = clamp_int(s.y_speed_tenths, Y_SPEED_MIN_TENTHS_RPS, Y_SPEED_MAX_TENTHS_RPS);
+<<<<<<< HEAD
+=======
+  start_right = s.start_right != 0;
+>>>>>>> ecaf5c5b57e6cfd2ef8d7d9244e5381016d40631
   // Edges are measured from home, so they remain valid after the boot homing
   if (s.edges_set && s.left_pos >= 0 && s.right_pos >= s.left_pos + (long)MIN_COIL_WIDTH_STEPS) {
     edges_set = true;
@@ -243,7 +281,22 @@ static void enter_menu(const char *m) {
 static void goto_left_edge(void) {
   if (!edges_set) return;
   stepper_set_rate(AXIS_X, JOG_RATE_SPS);
+<<<<<<< HEAD
   stepper_move_to(AXIS_X, left_pos);
+=======
+  stepper_move_to(AXIS_X, start_right ? right_pos : left_pos);
+}
+
+static void enter_jog_y(void) {
+  state = ST_JOG_Y;
+  msg = "";
+  stepper_follow_stop();
+  stepper_stop(AXIS_Y);
+  stepper_stop(AXIS_X);
+  stepper_set_rate(AXIS_Y, JOG_Y_RATE_SPS);
+  jog_y_target = stepper_get_position(AXIS_Y);
+  ui_dirty = true;
+>>>>>>> ecaf5c5b57e6cfd2ef8d7d9244e5381016d40631
 }
 
 static void enter_setup(int s) {
@@ -311,6 +364,10 @@ static void start_winding(void) {
   section = tap_mode ? section + 1 : 1;
   seg_base = 0;
   resume_ok = false;
+<<<<<<< HEAD
+=======
+  pattern_set_mirror(start_right);
+>>>>>>> ecaf5c5b57e6cfd2ef8d7d9244e5381016d40631
   pattern_begin((pattern_t)pat, left_pos, right_pos, d, univ_quarters);
   float mspr = pattern_max_steps_per_rev();
   y_cap_tenths = Y_SPEED_MAX_TENTHS_RPS;
@@ -326,7 +383,11 @@ static void start_winding(void) {
   Serial.print(F(", Y tenths rps=")); Serial.println(y_speed_effective());
 
   stepper_set_rate(AXIS_X, JOG_RATE_SPS);
+<<<<<<< HEAD
   stepper_move_to(AXIS_X, left_pos);
+=======
+  stepper_move_to(AXIS_X, start_right ? right_pos : left_pos);
+>>>>>>> ecaf5c5b57e6cfd2ef8d7d9244e5381016d40631
   state = ST_TO_START;
   msg = "";
   ui_dirty = true;
@@ -390,6 +451,16 @@ static void ui_update(void) {
       lcd_print_row(2, msg[0] ? msg : "Knob: jog guide");
       lcd_print_row(3, state == ST_SET_LEFT ? "Click:set Hold:cancel" : "Click:set Hold:cancel");
       break;
+<<<<<<< HEAD
+=======
+    case ST_JOG_Y:
+      lcd_print_row(0, "Jog form motor");
+      snprintf(buf, sizeof(buf), "Angle: %ld deg", (stepper_get_position(AXIS_Y) * 360L / (long)Y_STEPS_PER_REV) % 360L);
+      lcd_print_row(1, buf);
+      lcd_print_row(2, "Knob: rotate form");
+      lcd_print_row(3, "Click: done");
+      break;
+>>>>>>> ecaf5c5b57e6cfd2ef8d7d9244e5381016d40631
     case ST_TO_START:
       lcd_print_row(0, "Moving to start...");
       lcd_print_row(1, "");
@@ -477,6 +548,12 @@ void loop() {
         if (it == IT_EDGES) {
           editing = false;
           enter_setup(ST_SET_LEFT);
+<<<<<<< HEAD
+=======
+        } else if (it == IT_JOGY) {
+          editing = false;
+          enter_jog_y();
+>>>>>>> ecaf5c5b57e6cfd2ef8d7d9244e5381016d40631
         } else if (it == IT_START) {
           start_winding();
         } else if (it == IT_SAVE) {
@@ -529,6 +606,23 @@ void loop() {
       if (state == ST_SET_LEFT || state == ST_SET_RIGHT) ui_dirty = true;
       break;
 
+<<<<<<< HEAD
+=======
+    case ST_JOG_Y:
+      if (delta) {
+        jog_y_target += (long)delta * (long)JOG_Y_STEPS_PER_DETENT;
+        stepper_move_to(AXIS_Y, jog_y_target);
+      }
+      if (btn == BTN_SHORT || btn == BTN_LONG) {
+        stepper_stop(AXIS_Y);
+        apply_y_speed();
+        enter_menu("");
+        break;
+      }
+      if ((millis() - last_ui_ms) >= 250) ui_dirty = true;
+      break;
+
+>>>>>>> ecaf5c5b57e6cfd2ef8d7d9244e5381016d40631
     case ST_TO_START:
       if (btn == BTN_LONG) { enter_menu("Cancelled"); break; }
       if (!stepper_move_active(AXIS_X)) begin_run();
