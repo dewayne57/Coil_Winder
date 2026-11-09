@@ -1,6 +1,71 @@
-// Coil winder - X axis (wire guide) and Y axis (form spindle).
-// Flow: home X -> settings menu (wire, turns, winding type, speed) -> set left/right edges by
-// jogging the guide -> START. During the run X is slaved to the spindle by the step interrupt.
+// Coil winder firmware for controlling X (wire guide) and Y (form spindle) axes.  This 
+// handles homing, jogging, and automated winding based on user settings.  The user has
+// control over wire type, number of turns, winding pattern, speed, coil edges, and 
+// positioning. The firmware manages the coordination between the X and Y axes to ensure 
+// accurate winding.
+// 
+// It also provides a user interface for configuring these settings and monitoring the 
+// winding process. Supported capabilities include:
+// - Homing of the X axis (wire guide)
+// - Jogging of the X and Y axes
+// - Automated winding based on user-defined settings
+// - Configuration of wire type, number of turns, winding pattern, and speed
+// - Setting and using coil edges for precise winding
+// - Multi-tap winding with section management
+// - User interface for monitoring and adjusting settings
+// 
+// This project is an open-source and open-hardware initiative for building a coil winder, 
+// and is freely available for modification and distribution under the terms of the MIT License.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+// THE SOFTWARE.
+// 
+// The original author of this firmware is Dewayne Hafenstein.  This entire project 
+// is based on the works of JGJMatt's project in Instructables at 
+// https://www.instructables.com/Make-an-Automatic-Coil-Winder/.  The original 
+// project was GRBL-based, but this project replaces that control mechanism 
+// with direct stepper control using an Arduino-compatible microcontroller, user
+// interface, and additional features for precise coil winding.  It is intended 
+// for hobbyists, educators, and anyone interested in automated coil winding, 
+// using a complete self-contained and stand-alone coil winding system.
+//
+// Significant changes include:
+// - Replacement of GRBL-based control with direct stepper control.
+// - Implementation of a user interface for setting coil parameters.
+// - Addition of precise coil edge setting and jogging functionality.
+// - Support for multiple winding patterns and universal winding.
+// - Enhanced speed control and safety features for the stepper motors.
+// - Multi-tap functionality for complex winding sequences.
+// - Improved error handling and recovery mechanisms.
+// - Integration of homing and endstop detection for accurate positioning.
+// - Support for jogging the Y axis independently for setup and adjustments.
+// - Improved user interface with menu navigation and real-time feedback.
+// - Enhanced support for different wire gauges and manual wire diameter input.
+// - Improved handling of multi-tap winding sequences with section tracking and resumption. 
+// - Larger stepper motor (23 instead of 17 series) for the form motor for increased torque and reliability.
+// - Improved synchronization between X and Y axes for consistent winding quality.
+// - Enhanced support for different coil form sizes and shapes.
+// - Larger winding sizes accommodated with improved X axis travel range.
+// - improved tensioning mechanism with wire out sensing
+// - addition of both left and right edge limit switches 
+// - Ability to wind single and multiple filaments simultaneously (bifilar, trifilar, etc.)
+// - Support for both left-handed and right-handed winding configurations.
+//
 #include <stdio.h>
 #include <stdlib.h>
 #include "config.h"
@@ -13,7 +78,20 @@
 #include "pattern.h"
 #include "settings.h"
 
-typedef enum { ST_MENU, ST_SET_LEFT, ST_SET_RIGHT, ST_TO_START, ST_RUN, ST_PAUSED, ST_DONE, ST_ERROR, ST_JOG_Y } state_t;
+// States for the main state machine of the coil winder
+typedef enum { 
+  ST_MENU = 0,         //< Main menu state
+  ST_SET_LEFT = 1,     //< Setting the left edge of the coil
+  ST_SET_RIGHT = 2,    //< Setting the right edge of the coil
+  ST_TO_START = 3,     //< Moving to the start position for winding
+  ST_RUN = 4,          //< Actively winding the coil
+  ST_PAUSED = 5,       //< Winding paused
+  ST_DONE = 6,         //< Winding completed
+  ST_ERROR = 7,        //< Error state
+  ST_JOG_Y = 8         //< Jogging the Y axis independently
+} state_t;
+
+// Menu item identifiers for the coil winder interface
 enum { IT_UNITS, IT_WIRE, IT_TURNS, IT_TYPE, IT_UNIV, IT_SPEED, IT_EDGES, IT_SIDE, IT_JOGY, IT_START, IT_REHOME, IT_NEWCOIL, IT_SAVE, IT_COUNT };
 
 static state_t state = ST_MENU;
