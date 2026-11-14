@@ -74,6 +74,10 @@ The general winding process is:
    checks.  If the bar is not retracted, the system will prompt you to retract the bar
    before anything else can be performed.
 2. Install the coil form, wire, and guide hardware and verify the machine moves freely.
+   Make sure to install the correct form adapters for a round, rectangular, or square 
+   form.  Also, ensure that the correct wire guide end is installed for 1, 2, 3, or 4 
+   filament winding and the wire(s) are threaded on the appropriate tensioners and 
+   pulleys.
 3. Power on the system.  When the system first powers on (assuming the alignment bar 
    is retracted), the system will automatically home the wire guide to the left edge.)
 4. Select to set the left and right edges.  Jog the wire guide until the wire guide 
@@ -90,7 +94,7 @@ The general winding process is:
 7. Choose the winding pattern and the number of turns, then start the winding sequence.
 8. The machine will move the X guide while the spindle rotates the form, keeping the 
    required relationship between the axes for the selected pattern.
-9. When the turns are completed, the machine will stop and allow you to create a tap
+9.  When the turns are completed, the machine will stop and allow you to create a tap
    and enter a new number of turns, or to complete the winding.  While stopped, you 
    can jog the form either clockwise or counter-clockwise as needed for taping or 
    to anchor the wire for a tap. 
