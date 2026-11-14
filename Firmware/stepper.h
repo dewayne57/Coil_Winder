@@ -1,3 +1,25 @@
+/** Coil_Winder Firmware
+ * Copyright (c) 2026 Dewayne L. Hafenstein
+ *
+ * This file is part of the Coil_Winder project.
+ *
+ * License: Coil_Winder Non-Commercial License
+ * Permission is granted to use, copy, modify, and redistribute this
+ * firmware for personal, educational, research, and non-commercial
+ * purposes only.
+ * Commercial use, including sale, manufacturing, sublicensing, or
+ * distribution for direct or indirect financial gain, is prohibited
+ * without a separate written commercial license from the copyright
+ * holder.
+ * Any modified or redistributed copies must retain this notice.
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND
+ * NONINFRINGEMENT. IN NO EVENT SHALL THE COPYRIGHT HOLDER BE LIABLE
+ * FOR ANY CLAIM, DAMAGES, OR OTHER LIABILITY, WHETHER IN AN ACTION OF
+ * CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF CONNECTION WITH
+ * THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
 #ifndef STEPPER_H
 #define STEPPER_H
 
@@ -9,37 +31,127 @@ extern "C" {
 
 typedef enum { AXIS_X = 0, AXIS_Y = 1, AXIS_COUNT } axis_t;
 
-/* Direction is axis-relative: X: reverse=left, forward=right. Y: spindle reverse/forward. */
+/* Direction is axis-relative: X: reverse=left, forward=right. 
+ * Y: spindle reverse/forward. 
+ */
 typedef enum { DIR_REVERSE = 0, DIR_FORWARD = 1 } dir_t;
 
-/* Sets up pins and the Timer1 interrupt that generates all step pulses. */
+/**
+ * @brief Initializes the stepper driver peripherals and timer-based pulse generator.
+ */
 void stepper_init(void);
+
+/**
+ * @brief Enables or disables the shared stepper driver enable pin.
+ *
+ * @param on True to enable the driver, false to disable it.
+ */
 void stepper_enable(bool on);
+
+/**
+ * @brief Sets the motion direction for a selected axis.
+ *
+ * @param axis Axis to update.
+ * @param dir Requested direction.
+ */
 void stepper_set_dir(axis_t axis, dir_t dir);
+
+/**
+ * @brief Reads the currently configured direction for an axis.
+ *
+ * @param axis Axis to query.
+ * @return Current axis direction.
+ */
 dir_t stepper_get_dir(axis_t axis);
-/* Step rate in (micro)steps per second. */
+
+/**
+ * @brief Configures the step rate for a selected axis.
+ *
+ * @param axis Axis to update.
+ * @param steps_per_sec Desired step rate in steps per second.
+ */
 void stepper_set_rate(axis_t axis, unsigned long steps_per_sec);
-/* Start/stop step generation for an axis. */
+
+/**
+ * @brief Enables or disables step generation for an axis.
+ *
+ * @param axis Axis to update.
+ * @param running True to start stepping, false to hold the axis.
+ */
 void stepper_set_running(axis_t axis, bool running);
-/* Position in (micro)steps since stepper_set_position; forward is positive. */
+
+/**
+ * @brief Returns the current absolute position of an axis.
+ *
+ * @param axis Axis to query.
+ * @return Current position in microsteps.
+ */
 long stepper_get_position(axis_t axis);
+
+/**
+ * @brief Sets the stored position for one axis.
+ *
+ * @param axis Axis to update.
+ * @param pos New position in microsteps.
+ */
 void stepper_set_position(axis_t axis, long pos);
-/* Move to an absolute position at the current rate and stop exactly there (non-blocking). */
+
+/* (non-blocking). */
+/**
+ * @brief Starts a non-blocking absolute move for an axis.
+ *
+ * @param axis Axis to move.
+ * @param target Desired absolute position in microsteps.
+ */
 void stepper_move_to(axis_t axis, long target);
+
+/**
+ * @brief Reports whether a move is still active for an axis.
+ *
+ * @param axis Axis to query.
+ * @return True while the absolute move is in progress.
+ */
 bool stepper_move_active(axis_t axis);
-/* Stops the axis and cancels any move in progress. */
+
+/**
+ * @brief Stops a selected axis and cancels any pending absolute move.
+ *
+ * @param axis Axis to stop.
+ */
 void stepper_stop(axis_t axis);
 
-/* Follow mode: X is slaved to Y. The path is queued as equal-length segments (seg_len Y steps
-   each); each segment moves X by dx steps in proportion to Y's progress. Two segments can be
-   queued ahead. Start with Y stopped, queue segments, then start Y. */
+/**
+ * @brief Enables Y/X follow mode with a fixed segment length.
+ *
+ * @param seg_len_y_steps Number of Y microsteps per follow segment.
+ */
 void stepper_follow_start(long seg_len_y_steps);
+
+/**
+ * @brief Disables the X/Y follow interpolator.
+ */
 void stepper_follow_stop(void);
-/* Returns false if both queue slots are full. */
+
+/**
+ * @brief Queues the next X-axis delta for the active follow segment.
+ *
+ * @param dx X delta in microsteps for the next queued segment.
+ * @return True when the segment was accepted, false when both queue slots are full.
+ */
 bool stepper_follow_queue(long dx);
-/* True if Y ran out of queued segments (set when a segment ends with none queued). */
+
+/**
+ * @brief Reports whether the follow interpolator ran out of queued data.
+ *
+ * @return True when follow mode is starved and waiting for more segments.
+ */
 bool stepper_follow_starved(void);
-/* True when X has caught up to where Y says it should be. */
+
+/**
+ * @brief Reports whether the X axis has caught up to the follow target.
+ *
+ * @return True when follow mode is settled.
+ */
 bool stepper_follow_settled(void);
 
 #ifdef __cplusplus

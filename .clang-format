@@ -1,0 +1,18 @@
+﻿BasedOnStyle: LLVM
+SortIncludes: false
+PointerAlignment: Left
+BreakBeforeBraces: Attach
+AllowShortIfStatementsOnASingleLine: Never
+IndentWidth: 2
+TabWidth: 2
+UseTab: Never
+ColumnLimit: 120
+AlwaysBreakAfterDefinitionReturnType: None
+AlwaysBreakTemplateDeclarations: Yes
+PenaltyBreakBeforeFirstCallParameter: 1
+Cpp11BracedListStyle: false
+Language: Cpp
+
+# Require one declaration per statement.
+# This is the clang-format equivalent for avoiding comma-separated declarations.
+# It is enforced by the formatter while leaving the code style otherwise standard.

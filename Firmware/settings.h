@@ -1,3 +1,25 @@
+/** Coil_Winder Firmware
+ * Copyright (c) 2026 Dewayne L. Hafenstein
+ *
+ * This file is part of the Coil_Winder project.
+ *
+ * License: Coil_Winder Non-Commercial License
+ * Permission is granted to use, copy, modify, and redistribute this
+ * firmware for personal, educational, research, and non-commercial
+ * purposes only.
+ * Commercial use, including sale, manufacturing, sublicensing, or
+ * distribution for direct or indirect financial gain, is prohibited
+ * without a separate written commercial license from the copyright
+ * holder.
+ * Any modified or redistributed copies must retain this notice.
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND
+ * NONINFRINGEMENT. IN NO EVENT SHALL THE COPYRIGHT HOLDER BE LIABLE
+ * FOR ANY CLAIM, DAMAGES, OR OTHER LIABILITY, WHETHER IN AN ACTION OF
+ * CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF CONNECTION WITH
+ * THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
 #ifndef SETTINGS_H
 #define SETTINGS_H
 
@@ -8,6 +30,8 @@
 extern "C" {
 #endif
 
+// Settings structure for the Coil_Winder firmware. This structure is persisted
+// to EEPROM and contains all user-configurable parameters for winding.
 typedef struct {
   uint8_t  awg_mode;
   int16_t  awg;
@@ -22,8 +46,20 @@ typedef struct {
   uint8_t  start_right; /* 1 = start winding at the right edge */
 } settings_t;
 
-/* Returns false if nothing valid is stored (the struct is left untouched). */
+
+/**
+ * @brief Loads persisted settings from EEPROM.
+ *
+ * @param s Pointer to the settings destination.
+ * @return True when a valid settings block was found and loaded.
+ */
 bool settings_load(settings_t *s);
+
+/**
+ * @brief Saves the current settings to EEPROM.
+ *
+ * @param s Settings structure to persist.
+ */
 void settings_save(const settings_t *s);
 
 #ifdef __cplusplus

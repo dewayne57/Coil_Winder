@@ -1,3 +1,26 @@
+/**
+ * Coil_Winder Firmware
+ * Copyright (c) 2026 Dewayne L. Hafenstein
+ *
+ * This file is part of the Coil_Winder project.
+ *
+ * License: Coil_Winder Non-Commercial License
+ * Permission is granted to use, copy, modify, and redistribute this
+ * firmware for personal, educational, research, and non-commercial
+ * purposes only.
+ * Commercial use, including sale, manufacturing, sublicensing, or
+ * distribution for direct or indirect financial gain, is prohibited
+ * without a separate written commercial license from the copyright
+ * holder.
+ * Any modified or redistributed copies must retain this notice.
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND
+ * NONINFRINGEMENT. IN NO EVENT SHALL THE COPYRIGHT HOLDER BE LIABLE
+ * FOR ANY CLAIM, DAMAGES, OR OTHER LIABILITY, WHETHER IN AN ACTION OF
+ * CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF CONNECTION WITH
+ * THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
 #include <Arduino.h>
 #include <util/atomic.h>
 #include "stepper.h"
@@ -12,8 +35,15 @@
    interpolator through the current segment (dx X-steps spread over seg_len Y-steps) and
    moves the X target; the interrupt then steps X toward that target. The main loop only has
    to queue one segment ahead, so X stays locked to the spindle however long the main loop
-   is busy. */
+   is busy. 
+  
+   The Bresenham algorithm ensures that X steps are distributed evenly over the Y steps of 
+   the current segment, maintaining accurate follow behavior.  This algorithm is used a 
+   great deal in CNC and 3D printing applications for precise coordinated motion.
+  */
 
+// Axis configuration structure for each stepper motor. Contains pin assignments,
+// phase accumulator, stepping state, position, and direction information.
 typedef struct {
   uint8_t step_pin;
   uint8_t dir_pin;
@@ -29,28 +59,38 @@ typedef struct {
   volatile dir_t dir;
 } axis_cfg_t;
 
+// Array of axis configurations for each stepper motor. Initialized with pin assignments and default states.
 static axis_cfg_t axes[AXIS_COUNT] = {
   { X_STEP_PIN, X_DIR_PIN, X_DIR_RIGHT_LEVEL, 0, 0, false, false, 1, 0, 0, false, DIR_FORWARD },
   { Y_STEP_PIN, Y_DIR_PIN, Y_DIR_FWD_LEVEL,   0, 0, false, false, 1, 0, 0, false, DIR_FORWARD },
 };
 
-static volatile bool    f_on = false;
-static volatile int32_t f_len = 1;          /* Y steps per segment */
-static volatile int32_t f_pos = 0;          /* Y steps into the current segment */
-static volatile int32_t f_frac = 0;
-static volatile int32_t f_dx = 0;           /* X steps in the current segment */
-static volatile int32_t f_next_dx = 0;
-static volatile bool    f_cur_loaded = false;
-static volatile bool    f_next_valid = false;
-static volatile bool    f_starved = false;
-static volatile int32_t f_target = 0;       /* where X should be right now */
+static volatile bool    f_on = false;       // Follow mode active flag
+static volatile int32_t f_len = 1;          // Y steps per segment
+static volatile int32_t f_pos = 0;          // Y steps into the current segment
+static volatile int32_t f_frac = 0;         // Fractional part of the current segment
+static volatile int32_t f_dx = 0;           // X steps in the current segment
+static volatile int32_t f_next_dx = 0;      // X steps in the next segment
+static volatile bool    f_cur_loaded = false; // Current segment loaded flag
+static volatile bool    f_next_valid = false; // Next segment valid flag
+static volatile bool    f_starved = false;   // Follow mode starved flag
+static volatile int32_t f_target = 0;       // where X should be right now
 
+/**
+ * @brief Applies the requested direction to the axis and updates the sign used for stepping.
+ *
+ * @param a Axis configuration to modify.
+ * @param dir Requested direction.
+ */
 static inline void apply_dir(axis_cfg_t *a, dir_t dir) {
   a->dir = dir;
   a->sign = (dir == DIR_FORWARD) ? 1 : -1;
   digitalWrite(a->dir_pin, (dir == DIR_FORWARD) ? a->fwd_level : !a->fwd_level);
 }
 
+/**
+ * @brief Advances the Bresenham-style follow interpolator for the X/Y path.
+ */
 static inline void follow_advance(void) {
   int32_t dx = f_dx;
   int32_t adx = (dx < 0) ? -dx : dx;
@@ -72,6 +112,9 @@ static inline void follow_advance(void) {
   }
 }
 
+/**
+ * @brief Generates step pulses for all active axes and updates follow-mode tracking.
+ */
 ISR(TIMER1_COMPA_vect) {
   bool lowered[AXIS_COUNT];
   for (uint8_t i = 0; i < AXIS_COUNT; i++) {
@@ -116,15 +159,32 @@ ISR(TIMER1_COMPA_vect) {
   }
 }
 
+/**
+ * @brief Sets the step rate for a selected axis.
+ *
+ * @param axis Axis to update.
+ * @param steps_per_sec Desired step rate in steps per second.
+ */
 void stepper_set_rate(axis_t axis, unsigned long steps_per_sec) {
   uint32_t inc = (uint32_t)(((uint64_t)steps_per_sec << 32) / STEP_TICK_HZ);
   ATOMIC_BLOCK(ATOMIC_RESTORESTATE) { axes[axis].inc = inc; }
 }
 
+/**
+ * @brief Enables or disables stepping for a given axis.
+ *
+ * @param axis Axis to update.
+ * @param running True to enable pulses, false to hold the axis.
+ */
 void stepper_set_running(axis_t axis, bool running) {
   axes[axis].running = running;
 }
 
+/**
+ * @brief Stops the selected axis and cancels any in-flight move.
+ *
+ * @param axis Axis to stop.
+ */
 void stepper_stop(axis_t axis) {
   ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
     axes[axis].running = false;
@@ -132,6 +192,12 @@ void stepper_stop(axis_t axis) {
   }
 }
 
+/**
+ * @brief Starts a non-blocking move to a target position.
+ *
+ * @param axis Axis to move.
+ * @param target Absolute target in microsteps.
+ */
 void stepper_move_to(axis_t axis, long target) {
   long cur = stepper_get_position(axis);
   stepper_stop(axis);
@@ -145,8 +211,19 @@ void stepper_move_to(axis_t axis, long target) {
   }
 }
 
+/**
+ * @brief Reports whether the selected axis is still moving to an absolute target.
+ *
+ * @param axis Axis to query.
+ * @return True while the move is active.
+ */
 bool stepper_move_active(axis_t axis) { return axes[axis].goto_active; }
 
+/**
+ * @brief Starts follow mode using a fixed Y segment length.
+ *
+ * @param seg_len_y_steps Number of Y steps in each segment.
+ */
 void stepper_follow_start(long seg_len_y_steps) {
   stepper_stop(AXIS_X);
   ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
@@ -163,10 +240,19 @@ void stepper_follow_start(long seg_len_y_steps) {
   }
 }
 
+/**
+ * @brief Disables follow mode and leaves the interpolator idle.
+ */
 void stepper_follow_stop(void) {
   ATOMIC_BLOCK(ATOMIC_RESTORESTATE) { f_on = false; }
 }
 
+/**
+ * @brief Queues a follow-mode X delta for the active segment.
+ *
+ * @param dx X delta in microsteps for the queued segment.
+ * @return True if the queue accepted the segment.
+ */
 bool stepper_follow_queue(long dx) {
   bool ok = false;
   ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
@@ -183,14 +269,27 @@ bool stepper_follow_queue(long dx) {
   return ok;
 }
 
+/**
+ * @brief Reports whether follow mode has fallen behind due to missing queued segments.
+ *
+ * @return True if the interpolator is starved.
+ */
 bool stepper_follow_starved(void) { return f_starved; }
 
+/**
+ * @brief Returns whether the X axis has caught up with the queued follow target.
+ *
+ * @return True when the X axis has settled against the target.
+ */
 bool stepper_follow_settled(void) {
   bool s;
   ATOMIC_BLOCK(ATOMIC_RESTORESTATE) { s = (axes[AXIS_X].pos == f_target) && !axes[AXIS_X].pulse_high; }
   return s;
 }
 
+/**
+ * @brief Initializes all axis outputs, default directions, and the Timer1 step generator.
+ */
 void stepper_init(void) {
   pinMode(STEPPER_EN_PIN, OUTPUT);
   for (uint8_t i = 0; i < AXIS_COUNT; i++) {
@@ -211,22 +310,51 @@ void stepper_init(void) {
   }
 }
 
+/**
+ * @brief Enables or disables the shared stepper driver stage.
+ *
+ * @param on True to enable the driver, false to disable it.
+ */
 void stepper_enable(bool on) {
   digitalWrite(STEPPER_EN_PIN, on ? LOW : HIGH);
 }
 
+/**
+ * @brief Sets the direction pin for the selected axis.
+ *
+ * @param axis Axis to update.
+ * @param dir Desired direction.
+ */
 void stepper_set_dir(axis_t axis, dir_t dir) {
   apply_dir(&axes[axis], dir);
 }
 
+/**
+ * @brief Returns the configured direction for the selected axis.
+ *
+ * @param axis Axis to query.
+ * @return Current direction state.
+ */
 dir_t stepper_get_dir(axis_t axis) { return axes[axis].dir; }
 
+/**
+ * @brief Returns the stored absolute position of one axis.
+ *
+ * @param axis Axis to query.
+ * @return Axis position in microsteps.
+ */
 long stepper_get_position(axis_t axis) {
   int32_t p;
   ATOMIC_BLOCK(ATOMIC_RESTORESTATE) { p = axes[axis].pos; }
   return p;
 }
 
+/**
+ * @brief Writes the stored position for an axis.
+ *
+ * @param axis Axis to update.
+ * @param pos New absolute position in microsteps.
+ */
 void stepper_set_position(axis_t axis, long pos) {
   ATOMIC_BLOCK(ATOMIC_RESTORESTATE) { axes[axis].pos = pos; }
 }

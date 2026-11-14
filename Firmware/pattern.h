@@ -1,3 +1,25 @@
+/** Coil_Winder Firmware
+ * Copyright (c) 2026 Dewayne L. Hafenstein
+ *
+ * This file is part of the Coil_Winder project.
+ *
+ * License: Coil_Winder Non-Commercial License
+ * Permission is granted to use, copy, modify, and redistribute this
+ * firmware for personal, educational, research, and non-commercial
+ * purposes only.
+ * Commercial use, including sale, manufacturing, sublicensing, or
+ * distribution for direct or indirect financial gain, is prohibited
+ * without a separate written commercial license from the copyright
+ * holder.
+ * Any modified or redistributed copies must retain this notice.
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND
+ * NONINFRINGEMENT. IN NO EVENT SHALL THE COPYRIGHT HOLDER BE LIABLE
+ * FOR ANY CLAIM, DAMAGES, OR OTHER LIABILITY, WHETHER IN AN ACTION OF
+ * CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF CONNECTION WITH
+ * THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
 #ifndef PATTERN_H
 #define PATTERN_H
 
@@ -15,24 +37,55 @@ typedef enum {
 
 #include <stdbool.h>
 
+/**
+ * @brief Returns the human-readable name of a winding pattern.
+ *
+ * @param t Pattern to describe.
+ * @return Name string for the selected pattern.
+ */
 const char *pattern_name(pattern_t t);
 
-/* When set, the pattern is mirrored so winding starts at the right edge and proceeds leftward.
-   Call before pattern_begin. */
+/* When set, the pattern is mirrored so winding starts at the right edge
+ * and proceeds leftward. Call before pattern_begin.
+ */
+/**
+ * @brief Enables or disables mirrored winding direction.
+ *
+ * @param mirror True to reverse winding start direction.
+ */
 void pattern_set_mirror(bool mirror);
 
-/* left/right are the guide positions (X microsteps) of the first and last wire centres.
-   wire_steps is the wire pitch in X microsteps. univ_quarters is used by PAT_UNIVERSAL only. */
+/**
+ * @brief Initializes a winding pattern over the selected coil span.
+ *
+ * @param t Pattern type.
+ * @param left Left coil-edge position in microsteps.
+ * @param right Right coil-edge position in microsteps.
+ * @param wire_steps Nominal wire pitch in X microsteps.
+ * @param univ_quarters Universal pattern quarter-turn count.
+ */
 void pattern_begin(pattern_t t, long left, long right, float wire_steps, int univ_quarters);
 
-/* Guide segments per spindle revolution (1, or 4 for universal). */
+/**
+ * @brief Returns the number of pattern segments per spindle revolution.
+ *
+ * @return Segment count for the active pattern.
+ */
 long pattern_segs_per_rev(void);
 
-/* Largest guide travel in X microsteps during one spindle revolution (for speed limiting). */
+/**
+ * @brief Returns the maximum guide travel during one spindle revolution.
+ *
+ * @return Largest guide excursion in microsteps.
+ */
 float pattern_max_steps_per_rev(void);
 
-/* Absolute guide position at the start of segment `seg`.
-   Must be called with consecutive indices 0, 1, 2, ... after pattern_begin. */
+/**
+ * @brief Computes the X guide position for a selected pattern segment.
+ *
+ * @param seg Segment index.
+ * @return Guide position in microsteps at the start of that segment.
+ */
 long pattern_pos(unsigned long seg);
 
 #ifdef __cplusplus

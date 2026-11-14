@@ -1,0 +1,6 @@
+Checks: >
+  -*
+  readability-isolate-declaration
+WarningsAsErrors: ''
+HeaderFilterRegex: '^(Firmware/|.*)$'
+FormatStyle: file
