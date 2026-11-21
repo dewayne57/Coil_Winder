@@ -55,6 +55,10 @@ static inline void lcd_rs_set(uint8_t rs) {
   else    PORTC &= ~_BV(PC1);
 }
 
+void lcd_set_backlight(uint8_t enabled) {
+  digitalWrite(LCD_BACKLIGHT_PIN, enabled ? HIGH : LOW);
+}
+
 /**
  * @brief Pulses the LCD enable line to latch the current data byte.
  */
@@ -95,12 +99,16 @@ static void send(uint8_t value, uint8_t rs) {
 void lcd_init(void) {
   pinMode(LCD_RS_PIN, OUTPUT);
   pinMode(LCD_EN_PIN, OUTPUT);
+  pinMode(LCD_RW_PIN, OUTPUT);
+  pinMode(LCD_BACKLIGHT_PIN, OUTPUT);
   DDRC |= _BV(PC0) | _BV(PC1);
   DDRC &= ~(_BV(PC5) | _BV(PC6) | _BV(PC7));
   DDRD; /* keep the compiler happy; no direct effect */
   DDRE = 0xFF;        /* PE0..PE7 = DB0..DB7 */
   PORTE = 0x00;
   PORTC &= ~(_BV(PC0) | _BV(PC1));
+  digitalWrite(LCD_RW_PIN, LOW);
+  lcd_set_backlight(1);
 
   delay(50);            /* power-up wait */
   send(0x30, 0); delay(5);

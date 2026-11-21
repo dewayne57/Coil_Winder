@@ -28,6 +28,7 @@ extern "C" {
 #endif
 
 void lcd_init(void);
+void lcd_set_backlight(uint8_t enabled);
 /* Writes text to a row, padded/truncated to the display width. Skips
  * the write if unchanged. 
  */
