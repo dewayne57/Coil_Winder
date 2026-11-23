@@ -89,20 +89,20 @@
 
 /* 20x4 HD44780 LCD, 8-bit parallel (RW on D35, backlight on D34 active high;
  * VSS/K to GND, VDD/A to 5V, V0 to contrast pot). LCD E/RS are on PC0/PC1
- * to allow fast port-level toggles; the data bus is on PE0..PE7.
+ * to allow fast port-level toggles; the data bus is on PA0..PA7.
  */
 #define LCD_RS_PIN 36 /* PC1 */
 #define LCD_EN_PIN 37 /* PC0 */
-#define LCD_RW_PIN 35 /* PL0 */
-#define LCD_BACKLIGHT_PIN 34 /* PL1 */
-#define LCD_D0_PIN 24 /* PE0 */
-#define LCD_D1_PIN 25 /* PE1 */
-#define LCD_D2_PIN 26 /* PE2 */
-#define LCD_D3_PIN 27 /* PE3 */
-#define LCD_D4_PIN 28 /* PE4 */
-#define LCD_D5_PIN 29 /* PE5 */
-#define LCD_D6_PIN 30 /* PE6 */
-#define LCD_D7_PIN 31 /* PE7 */
+#define LCD_RW_PIN 35 /* PC2 */
+#define LCD_BACKLIGHT_PIN 34 /* PC3 */
+#define LCD_D0_PIN 22 /* PA0 */
+#define LCD_D1_PIN 23 /* PA1 */
+#define LCD_D2_PIN 24 /* PA2 */
+#define LCD_D3_PIN 25 /* PA3 */
+#define LCD_D4_PIN 26 /* PA4 */
+#define LCD_D5_PIN 27 /* PA5 */
+#define LCD_D6_PIN 28 /* PA6 */
+#define LCD_D7_PIN 29 /* PA7 */
 #define LCD_COLS 20
 #define LCD_ROWS 4
 

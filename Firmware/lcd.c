@@ -26,7 +26,7 @@
 #include "config.h"
 
 /**
- * Minimal HD44780 8-bit LCD driver for AVR using PORTE for data and
+ * Minimal HD44780 8-bit LCD driver for AVR using PORTA for data and
  * PC0/PC1 for control lines.  Provides functions to initialize the
  * display and print text to specific rows.  Maintains a shadow buffer 
  * to minimize unnecessary writes to the display.
@@ -44,6 +44,12 @@
 
 static char shadow[LCD_ROWS][LCD_COLS + 1];
 static const uint8_t row_addr[4] = { 0x00, 0x40, 0x14, 0x54 };
+
+#if LCD_RS_PIN != 36 || LCD_EN_PIN != 37 || \
+    LCD_D0_PIN != 22 || LCD_D1_PIN != 23 || LCD_D2_PIN != 24 || LCD_D3_PIN != 25 || \
+    LCD_D4_PIN != 26 || LCD_D5_PIN != 27 || LCD_D6_PIN != 28 || LCD_D7_PIN != 29
+#error "LCD direct-port driver requires Mega RS=D36, E=D37, and DB0-DB7=D22-D29"
+#endif
 
 /**
  * @brief Sets the LCD register-select line.
@@ -79,12 +85,12 @@ static void pulse_enable(void) {
  */
 static void send(uint8_t value, uint8_t rs) {
   lcd_rs_set(rs);
-  PORTE = value;
+  PORTA = value;
   pulse_enable();
 }
 
 /**
- * @brief Initializes the HD44780 LCD and configures the PE/PC port layout.
+ * @brief Initializes the HD44780 LCD and configures the PA/PC port layout.
  * Configures the data and control lines for the LCD and performs the
  * initialization sequence required by the HD44780 controller.
  * @note This function must be called before any other LCD operations.
@@ -102,10 +108,8 @@ void lcd_init(void) {
   pinMode(LCD_RW_PIN, OUTPUT);
   pinMode(LCD_BACKLIGHT_PIN, OUTPUT);
   DDRC |= _BV(PC0) | _BV(PC1);
-  DDRC &= ~(_BV(PC5) | _BV(PC6) | _BV(PC7));
-  DDRD; /* keep the compiler happy; no direct effect */
-  DDRE = 0xFF;        /* PE0..PE7 = DB0..DB7 */
-  PORTE = 0x00;
+  PORTA = 0x00;
+  DDRA = 0xFF;        /* PA0..PA7 = DB0..DB7 */
   PORTC &= ~(_BV(PC0) | _BV(PC1));
   digitalWrite(LCD_RW_PIN, LOW);
   lcd_set_backlight(1);

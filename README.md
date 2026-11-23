@@ -215,6 +215,19 @@ all the parts that you will need.
     power supply.  Plug it in and turn on the rocker switch.  The LCD backlight
     should illuminate and the display should guide you.     
 
+### LCD wiring
+
+Connect the HD44780-compatible 20x4 LCD in 8-bit mode: DB0 through DB7
+to Mega D22 through D29 respectively, RW to D35, RS to D36, and E to
+D37. The backlight control is active high on D34. Use a suitable
+current-limited backlight driver if the LCD backlight exceeds the Mega
+pin's current rating. Connect VSS to ground, VDD to 5V, and V0 to the
+contrast potentiometer. The encoder uses D32, D31, and D30 for A, B,
+and its switch respectively.
+
+The firmware uses direct port access for the LCD data, RS, and E pins;
+changing those pin assignments also requires updating the driver.
+
 
 ## Usage
 

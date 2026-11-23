@@ -28,10 +28,10 @@
 // of the encoder to a movement value: -1 for counter-clockwise, +1 for clockwise, 
 // 0 for no movement.  
 static const int8_t transition[16] = {
-   0, -1,  1,  0,
-   1,  0,  0, -1,
+   0,  1, -1,  0,
   -1,  0,  0,  1,
-   0,  1, -1,  0
+   1,  0,  0, -1,
+   0, -1,  1,  0
 };
 
 static uint8_t prev_state;  // Previous quadrature state of the encoder
