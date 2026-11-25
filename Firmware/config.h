@@ -157,7 +157,8 @@
 #define UNIV_QUARTERS_MAX 80
 #define UNIV_QUARTERS_DEFAULT 13
 
-/* Scramble: max random guide movement per revolution, in wire pitches */
+/* Scramble: random traverse pitch, in wire pitches */
+#define SCRAMBLE_MIN_PITCHES 0.5f
 #define SCRAMBLE_MAX_PITCHES 3.0f
 
 /* Spindle speed adjustment from the encoder (units of 0.1 rev/s) */

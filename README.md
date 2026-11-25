@@ -49,9 +49,10 @@ patterns. These are:
 - Solenoid: The solenoid pattern places turns adjacent to each other on
   the form. Spacing can be specified in software, with the default
   being 0mm (turns are adjacent).
-- Scramble: The turns are laid down in a random pattern and overlap each
-  other. This form provides lower coil capacitance and is ideal for RF
-  and audio pickup coils.
+- Scramble: The guide traverses the form in both directions, varying
+  the pitch randomly between traverses to distribute overlapping turns
+  across the width. This form provides lower coil capacitance and is
+  ideal for RF and audio pickup coils.
 - Orthocyclic: Similar to solenoid, except the subsequent layers are
   offset by 1/2 the diameter of the wire to ensure the most compact
   coil can be wound.

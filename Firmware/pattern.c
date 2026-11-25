@@ -32,6 +32,9 @@ static long turns_per_layer;   /* N: wire turns across one full layer (computed 
 static long univ_q;   /* Number of quarter turns for universal pattern */
 static uint32_t rng;   /* Random number generator state */
 static float scr_x;   /* Scramble pattern X position */
+static bool scr_right;   /* Scramble traverse direction */
+static float scr_step;   /* Guide movement per turn in this traverse */
+static long scr_remaining;   /* Turns remaining in this traverse */
 static bool mirrored;   /* Mirrored winding direction flag */
 
 /**
@@ -95,6 +98,8 @@ void pattern_begin(pattern_t t, long l, long r, float wire_steps, int univ_quart
   univ_q = (univ_quarters < 2) ? 2 : univ_quarters;
   rng = micros() | 1UL;
   scr_x = left;
+  scr_right = true;
+  scr_remaining = 0;
 }
 
 /**
@@ -153,13 +158,24 @@ long pattern_pos(unsigned long seg) {
     case PAT_SCRAMBLE:
       if (seg == 0) {
         scr_x = left;
+        scr_right = true;
+        scr_remaining = 0;
       } else {
-        float span = SCRAMBLE_MAX_PITCHES * (pitch > 0 ? pitch : wire_d);
-        scr_x += span * rnd_signed();
-        if (scr_x > right) scr_x = 2.0f * right - scr_x;
-        if (scr_x < left)  scr_x = 2.0f * left - scr_x;
-        if (scr_x > right) scr_x = right;
-        if (scr_x < left)  scr_x = left;
+        if (scr_remaining == 0 && width > 0.0f) {
+          float unit = (rnd_signed() + 1.0f) * 0.5f;
+          float distance = (pitch > 0 ? pitch : wire_d) *
+                           (SCRAMBLE_MIN_PITCHES +
+                            (SCRAMBLE_MAX_PITCHES - SCRAMBLE_MIN_PITCHES) * unit);
+          scr_remaining = (long)ceilf(width / distance);
+          scr_step = width / (float)scr_remaining;
+        }
+        if (scr_remaining > 0) {
+          scr_x += scr_right ? scr_step : -scr_step;
+          if (--scr_remaining == 0) {
+            scr_x = scr_right ? right : left;
+            scr_right = !scr_right;
+          }
+        }
       }
       x = scr_x;
       break;
